@@ -108,7 +108,7 @@ Chrome または Edge ブラウザを起動します。
 
 ## 動作確認
 
-Browser: Google Chrome 128.0.6613.120 (Official Build) (arm64)
+Browser: Google Chrome 149.0.7827.201 (Official Build) (arm64)
 
-OS: macOS バージョン14.6.1（ビルド23G93）
+OS: macOS バージョン15.7.4 (24G517)
 
