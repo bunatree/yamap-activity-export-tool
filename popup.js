@@ -76,6 +76,32 @@ async function fetchPhoto(url) {
   });
 }
 
+// 撮影日時のテキスト（例: "2026.07.05(日) 06:19"）をEXIFの日時形式（"2026:07:05 06:19:00"）に変換する
+function parseTakenAtToExifDateTime(takenAt) {
+  const match = (takenAt || '').match(/(\d{4})\.(\d{2})\.(\d{2}).*?(\d{2}):(\d{2})/);
+  if (!match) return null;
+  const [, y, mo, d, h, mi] = match;
+  return `${y}:${mo}:${d} ${h}:${mi}:00`;
+}
+
+// YAMAPがEXIFを削除した写真に、活動日記に表示されている撮影日時をEXIFとして埋め込む
+function embedExifDateTime(jpegDataUrl, exifDateTime) {
+  try {
+    const exifObj = {
+      '0th': { [piexif.ImageIFD.DateTime]: exifDateTime },
+      'Exif': {
+        [piexif.ExifIFD.DateTimeOriginal]: exifDateTime,
+        [piexif.ExifIFD.DateTimeDigitized]: exifDateTime
+      }
+    };
+    const exifBytes = piexif.dump(exifObj);
+    return piexif.insert(exifBytes, jpegDataUrl);
+  } catch (error) {
+    console.error('Failed to embed EXIF data:', error);
+    return jpegDataUrl;
+  }
+}
+
 async function downloadAsZip(activityData) {
 
   // 写真取得時の待ち時間（ミリ秒）
@@ -95,7 +121,14 @@ async function downloadAsZip(activityData) {
     const photo = activityData.photos[i];
     try {
 
-      const base64DataUrl = await fetchPhoto(photo.url);
+      let base64DataUrl = await fetchPhoto(photo.url);
+
+      // 撮影日時が取得できていれば、EXIFとして写真に埋め込む
+      const exifDateTime = parseTakenAtToExifDateTime(photo.takenAt);
+      if (exifDateTime) {
+        base64DataUrl = embedExifDateTime(base64DataUrl, exifDateTime);
+      }
+
       const response = await fetch(base64DataUrl);
       const blob = await response.blob();
 
@@ -154,21 +187,22 @@ async function downloadAsZip(activityData) {
   // (一瞬なので、まず見えないけど)
   showAlert(i18n[lang].msg_saved_text_info_files, 'success', false);
 
-  // メッセージをクリア
-  showAlert(i18n[lang].msg_export_completed, 'success', true);
-
   // ZIP ファイルの生成とダウンロード
   const content = await zip.generateAsync({ type: 'blob' });
   const url = URL.createObjectURL(content);
   const a = document.createElement('a');
   a.href = url;
-  // 日付からドット記号と(曜日)を削除
-  const activityDate = activityData.date.replace(/\./g, '-').replace(/\(.+\)/, '');
+  // 日付（例: "2026年07月05日(日)"）を YYYY-MM-DD 形式に変換
+  const dateMatch = (activityData.date || '').match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  const activityDate = dateMatch ? `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}` : '';
   const activityId = new URL(activityData.url).pathname.split('/').pop();
-  // ファイル名は yamap_YYYY-MM-DD_ActivityId.zip 
+  // ファイル名は yamap_YYYY-MM-DD_ActivityId.zip
   a.download = `yamap_${activityDate}_${activityId}.zip`;
   a.click();
   URL.revokeObjectURL(url);
+
+  // ダウンロードが実際に開始された後に完了メッセージを表示
+  showAlert(i18n[lang].msg_export_completed, 'success', true);
 }
 
 function showButtonArea() {

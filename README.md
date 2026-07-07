@@ -83,6 +83,10 @@ Chrome または Edge ブラウザを起動します。
 - 写真
   - 画像ファイル (JPEG)
 
+※ 写真は YAMAP 側でリサイズ・圧縮されたバージョン（写真の向きに応じて概ね 1440px 前後に収まるサイズ）がエクスポートされます。スマートフォンやカメラで撮影したオリジナルの高解像度画像を取得することはできません。
+
+※ 写真撮影日時が YAMAP の日記ページに表示されていれば、それを元に EXIF 情報を写真ファイルに追加しますが、EXIF の秒は、YAMAP の日記ページに記載されていないので、復元できません（秒は常に 00 になります）。
+
 活動日記のデータのダウンロードが完了すると、「GPXファイルをエクスポートしますか?」という確認ダイアログが表示されます。
 
 「OK」をクリックすると GPX ファイルのエクスポートを試みます。ただし、次の場合はエクスポートできません。
@@ -95,6 +99,8 @@ Chrome または Edge ブラウザを起動します。
 この拡張機能は、次のライブラリや画像を使用しています。
 
 [JSZip ライブラリ](https://stuk.github.io/jszip/ "JSZip") … JSZip は MIT ライセンスで配布されています。
+
+[piexifjs ライブラリ](https://github.com/hMatoba/piexifjs "piexifjs") … piexifjs は MIT ライセンスで配布されています。
 
 [Bleach free icon by Freepik - Flaticon](https://www.flaticon.com/free-icon/bleach_481058) … Free for personal and commercial purpose with attribution.
 
