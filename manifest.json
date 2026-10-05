@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YAMAP Activity Export Tool",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Exports YAMAP activity data including title, description, and photos.",
   "permissions": [
     "activeTab",

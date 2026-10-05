@@ -13,8 +13,7 @@ function isOwnActivity() {
 // 「日記」タブ（/article）のHTMLに埋め込まれたNext.jsのデータ（__NEXT_DATA__）を取得する。
 // 表示用のHTML（ハッシュ化クラス名）はYAMAPのUI変更のたびに壊れるが、
 // このJSONはアプリケーションの内部データなので構造が比較的安定している。
-// さらに、写真は縮小・再圧縮される前のURL（baseUrl）が、
-// 撮影日時は表示用の文字列ではなくUnixタイムスタンプが得られる。
+// さらに、撮影日時は表示用の文字列ではなくUnixタイムスタンプが得られる。
 async function fetchActivityData() {
   const activityPath = window.location.pathname.replace(/\/article\/?$/, '').replace(/\/+$/, '');
   const articleUrl = window.location.origin + activityPath + '/article';
@@ -91,8 +90,10 @@ async function gatherActivityData() {
 
   const photos = (articleData.images || []).map(image => {
     return {
-      // baseUrl は表示用に縮小・再圧縮（imgproxyのrs:fit/q:50）される前のURL
-      url: image.baseUrl,
+      // url は表示用に縮小・再圧縮（imgproxyのrs:fit/q:50）された画像のURL。
+      // 縮小前のファイルを指す baseUrl は、2026年9月末からYAMAP側でアクセスできなくなった（503等のエラーを返す）。
+      // imgproxyのURLは署名付きのため、サイズや画質の指定を書き換えることはできない。
+      url: image.url || image.baseUrl,
       memo: (image.caption || '').trim(),
       // 撮影日時。YAMAPがEXIFを削除した写真にEXIFを復元するために使う
       takenAt: formatTakenAt(image.takenAt, articleData.timeZone)

@@ -125,6 +125,9 @@ async function downloadAsZip(activityData) {
   // (一瞬なので、まず見えないけど)
   showAlert(i18n[lang].msg_completed_saving_json_file, 'success', false);
 
+  // 取得に失敗した写真の枚数
+  let failedPhotoCount = 0;
+
   // 写真をループ処理
   for (let i = 0; i < activityData.photos.length; i++) {
     const photo = activityData.photos[i];
@@ -162,13 +165,14 @@ async function downloadAsZip(activityData) {
 
       zip.file(`image${photoNumber}.jpg`, blob);
 
-      // 1秒待ってから次の画像を処理する
-      await delay(delayMs);
-
     } catch (error) {
+      failedPhotoCount++;
       showAlert('Failed to fetch photo: ' + error, 'warning', false);
       console.error('Failed to fetch photo:', error);
     }
+
+    // 0.5秒待ってから次の画像を処理する（取得に失敗した場合も、連続アクセスにならないよう必ず待つ）
+    await delay(delayMs);
   }
 
   // 画像処理完了メッセージ
@@ -219,7 +223,15 @@ async function downloadAsZip(activityData) {
   URL.revokeObjectURL(url);
 
   // ダウンロードが実際に開始された後に完了メッセージを表示
-  showAlert(i18n[lang].msg_export_completed, 'success', true);
+  if (failedPhotoCount > 0) {
+    // 写真が欠けたZIPを「完了」と誤解されないよう、失敗した枚数を消えないメッセージで知らせる
+    const message = i18n[lang].msg_export_completed_with_photo_errors
+      .replace('{failed}', failedPhotoCount)
+      .replace('{total}', activityData.photos.length);
+    showAlert(message, 'warning', false);
+  } else {
+    showAlert(i18n[lang].msg_export_completed, 'success', true);
+  }
 }
 
 function showButtonArea() {

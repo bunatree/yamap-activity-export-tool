@@ -5,7 +5,13 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'fetchPhoto') {
     fetch(request.url)
-      .then(response => response.blob())
+      .then(response => {
+        // エラー応答（503等）の本文を写真として保存してしまわないようにする
+        if (!response.ok) {
+          throw new Error(`${response.status} ${response.statusText}`.trim());
+        }
+        return response.blob();
+      })
       .then(blob => {
         const reader = new FileReader();
         reader.onloadend = () => {
